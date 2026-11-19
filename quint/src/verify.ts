@@ -81,6 +81,7 @@ export async function verifyWithTlcBackend(
   const startMs = Date.now()
   const tlcResult = await runTlc(
     {
+      checker: args.backend === 'tlx' ? 'tlx' : 'tlc',
       tlaCode: tlaResult.value,
       moduleName: prev.main!,
       hasInvariant: invariantsList.length > 0,

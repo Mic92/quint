@@ -390,7 +390,7 @@ const verifyCmd = {
       .option('backend', {
         desc: 'the backend to use for verification',
         type: 'string',
-        choices: ['apalache', 'tlc'],
+        choices: ['apalache', 'tlc', 'tlx'],
         default: 'apalache',
       })
       .option('tlc-config', {
@@ -414,7 +414,7 @@ const verifyCmd = {
   //      })
   handler: (args: any) => {
     if (args.verbosity === undefined) {
-      args.verbosity = args.backend === 'tlc' ? 3 : verbosity.defaultLevel
+      args.verbosity = args.backend === 'tlc' || args.backend === 'tlx' ? 3 : verbosity.defaultLevel
     }
     load(args)
       .then(chainCmd(parse))

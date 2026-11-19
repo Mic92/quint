@@ -17,6 +17,7 @@ import { spawn } from 'child_process'
 import fs, { readFileSync } from 'fs'
 import path from 'path'
 import os from 'os'
+import AdmZip from 'adm-zip'
 import { apalacheDistDir } from './config'
 import { ErrorMessage } from './ErrorMessage'
 
@@ -56,7 +57,21 @@ function isViolationExitCode(code: number): boolean {
   return code >= TLC_EXIT_VIOLATION_MIN && code <= TLC_EXIT_VIOLATION_MAX
 }
 
+/** `tlc` runs the TLC bundled with Apalache; `tlx` runs the native TLC-compatible checker of that name. */
+export type TlcChecker = 'tlc' | 'tlx'
+
+// Modules that Apalache's TLA+ output extends. TLC finds them inside the Apalache JAR, tlx needs them on disk.
+const APALACHE_MODULES = ['Apalache.tla', 'Variants.tla']
+
+function extractApalacheModules(jarPath: string, targetDir: string): void {
+  const jar = new AdmZip(jarPath)
+  for (const name of APALACHE_MODULES) {
+    jar.extractEntryTo(`tla2sany/StandardModules/${name}`, targetDir, false, true)
+  }
+}
+
 export interface TlcConfig {
+  checker?: TlcChecker
   tlaCode: string
   moduleName: string
   hasInvariant: boolean
@@ -118,21 +133,20 @@ export async function verify(
   fs.writeFileSync(tlaFile, config.tlaCode)
   fs.writeFileSync(cfgFile, generateCfg(config))
 
+  const checkerArgs = ['-deadlock', '-workers', String(workers), '-metadir', tmpDir]
+  let command: string
+  let args: string[]
+  if (config.checker === 'tlx') {
+    extractApalacheModules(jarPath, tmpDir)
+    command = process.env.QUINT_TLX ?? 'tlx'
+    args = ['check', tlaFile, ...checkerArgs]
+  } else {
+    command = 'java'
+    args = [maxHeap, stackSize, `-Djava.io.tmpdir=${tmpDir}`, '-cp', jarPath, 'tlc2.TLC', ...checkerArgs, tlaFile]
+  }
+
   return new Promise(resolve => {
-    const proc = spawn('java', [
-      maxHeap,
-      stackSize,
-      `-Djava.io.tmpdir=${tmpDir}`,
-      '-cp',
-      jarPath,
-      'tlc2.TLC',
-      '-deadlock',
-      '-workers',
-      String(workers),
-      '-metadir',
-      tmpDir,
-      tlaFile,
-    ])
+    const proc = spawn(command, args)
 
     proc.stdout.on('data', data => {
       if (verbosityLevel >= TLC_OUTPUT_VERBOSITY) {
@@ -160,7 +174,7 @@ export async function verify(
 
     proc.on('error', err => {
       fs.rmSync(tmpDir, { recursive: true, force: true })
-      resolve(left(tlcErr(`Failed to spawn TLC: ${err.message}`, false)))
+      resolve(left(tlcErr(`Failed to spawn ${command}: ${err.message}`, false)))
     })
   })
 }

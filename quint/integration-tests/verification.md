@@ -602,6 +602,22 @@ Test that TLC can verify a basic spec with state variables and invariants.
 quint verify --backend tlc --invariant inv ./testFixture/apalache/tlcCounter.qnt 2>&1 | grep '\[ok\]'
 ```
 
+### tlx verifies a simple counter spec successfully
+
+`--backend tlx` runs the same TLA+ through the native `tlx` checker instead of TLC.
+
+<!-- !test check tlx success -->
+```
+quint verify --backend tlx --invariant inv ./testFixture/apalache/tlcCounter.qnt 2>&1 | grep '\[ok\]'
+```
+
+### tlx reports a violated temporal property
+
+<!-- !test check tlx violation -->
+```
+quint verify --backend tlx --temporal zeroLeadsToFive ./testFixture/apalache/tlcLeadsTo.qnt 2>&1 | grep '\[violation\]'
+```
+
 ### TLC reports error message on violation
 
 Test that TLC properly detects and reports invariant violations.
