@@ -366,8 +366,14 @@ Options:
                          filename)                                       [string]
   --init                 name of the initializer action[string] [default: "init"]
   --step                 name of the step action       [string] [default: "step"]
-  --backend              the backend to use for verification
-                                        [string] [choices: "apalache", "tlc"] [default: "apalache"]
+  --backend              the model checker to use. apalache: symbolic, checks
+                         executions up to --max-steps, handles large data
+                         domains, experimental for --temporal. tlc: explores
+                         every reachable state, needs a finite state space, full
+                         support for --temporal. tlx: as tlc but native and
+                         several times faster, needs tlx on PATH (or QUINT_TLX);
+                         cross-check surprising results with tlc
+              [string] [choices: "apalache", "tlc", "tlx"] [default: "apalache"]
   --invariant            the invariants to check, separated by commas    [string]
   --inductive-invariant  inductive invariant to check (Apalache only). Can be
                          used together with ordinary invariants.         [string]

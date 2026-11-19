@@ -388,7 +388,8 @@ const verifyCmd = {
         default: 'localhost:8822',
       })
       .option('backend', {
-        desc: 'the backend to use for verification',
+        desc:
+          'the model checker to use. apalache: symbolic, checks executions up to --max-steps, handles large data domains, experimental for --temporal. tlc: explores every reachable state, needs a finite state space, full support for --temporal. tlx: as tlc but native and several times faster, needs tlx on PATH (or QUINT_TLX); cross-check surprising results with tlc',
         type: 'string',
         choices: ['apalache', 'tlc', 'tlx'],
         default: 'apalache',
